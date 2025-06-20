@@ -1,0 +1,228 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Variables CSS globales */
+:root {
+  --primary-color: #9267FD;
+  --secondary-color: #00C680;
+  --accent-color: #FE6BAC;
+  --background-color: #F3F4F1;
+  --text-color: #1F2937;
+  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --card-hover-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --border-radius: 12px;
+  --transition-speed: 0.3s;
+}
+
+/* Animations personnalisées */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes pulse-subtle {
+  0% { opacity: 0.8; }
+  50% { opacity: 1; }
+  100% { opacity: 0.8; }
+}
+
+@keyframes shine {
+  0% { background-position: -100% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Classes utilitaires */
+.float-animation {
+  animation: float 6s ease-in-out infinite;
+}
+
+.pulse-animation {
+  animation: pulse-subtle 3s infinite;
+}
+
+.shine-effect {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background-size: 200% 100%;
+  animation: shine 3s infinite;
+}
+
+/* Styles pour les cartes */
+.card-premium {
+  background: linear-gradient(135deg, #9267FD 0%, #6366F1 100%);
+  color: white;
+  border-radius: var(--border-radius);
+  transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+.card-premium:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--card-hover-shadow);
+}
+
+/* Styles pour les boutons */
+.btn-gradient {
+  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 10px 20px;
+  transition: all var(--transition-speed);
+}
+
+.btn-gradient:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(146, 103, 253, 0.3);
+}
+
+/* Styles pour les textes */
+.text-gradient {
+  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Styles pour les inputs */
+.input-custom {
+  border: 2px solid rgba(146, 103, 253, 0.2);
+  border-radius: var(--border-radius);
+  padding: 10px 16px;
+  transition: border-color var(--transition-speed);
+}
+
+.input-custom:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(146, 103, 253, 0.2);
+  outline: none;
+}
+
+/* Styles pour la barre d'outils flottante */
+.floating-toolbar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  border-radius: 50px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  padding: 8px;
+  z-index: 50;
+  display: flex;
+  gap: 8px;
+}
+
+.translate-50 {
+  transform: translateX(-50%) !important;
+}
+
+.bottom-40{
+  bottom: 7rem;
+}
+
+.w_fit{
+  width: fit-content;
+}
+
+.w-90{
+  width: 26rem;
+}
+
+@media screen and (max-width: 768px) {
+.logo-mobile-center{
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+}
+
+.mx-width-grid{
+  max-width: 1372px;
+}
+
+.m-auto{
+  margin: auto;
+}
+
+/* Styles pour les cartes Bento avec ombres améliorées */
+.react-grid-item {
+  transition: all 200ms ease;
+  transition-property: left, top, width, height;
+}
+
+.react-grid-item.react-grid-placeholder {
+  background: rgba(99, 102, 241, 0.2);
+  border: 2px dashed rgba(99, 102, 241, 0.4);
+  border-radius: 12px;
+  z-index: 2;
+  transition-duration: 100ms;
+  opacity: 0.7;
+  transition-timing-function: ease;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+}
+
+.react-grid-item:hover {
+  z-index: 10;
+}
+
+.react-grid-item.resizing {
+  z-index: 11;
+  will-change: width, height;
+}
+
+.react-grid-item.react-draggable-dragging {
+  z-index: 12;
+  will-change: transform;
+  cursor: move;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Effet d'ombre pour les cartes */
+.bento-card-shadow {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.bento-card-shadow:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+}
+
+/* Effet de profondeur pour les cartes */
+.depth-effect {
+  position: relative;
+}
+
+.depth-effect::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.depth-effect:hover::after {
+  opacity: 1;
+}
+
+/* Media queries pour la responsivité */
+@media (max-width: 768px) {
+  .floating-toolbar {
+    bottom: 16px;
+    padding: 6px;
+  }
+  
+  .btn-gradient {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+}
