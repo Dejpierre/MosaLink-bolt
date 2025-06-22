@@ -1,6 +1,8 @@
 import { StrictMode } from 'react';
 import '../styles/index.css';
 import '../styles/custom.css';
+import { AuthProvider } from '../components/auth/AuthProvider';
+import { AuthGuard } from '../components/auth/AuthGuard';
 
 export const metadata = {
   title: 'Bento Grid Editor',
@@ -23,7 +25,11 @@ export default function RootLayout({
       </head>
       <body>
         <StrictMode>
-          {children}
+          <AuthProvider>
+            <AuthGuard>
+              {children}
+            </AuthGuard>
+          </AuthProvider>
         </StrictMode>
       </body>
     </html>

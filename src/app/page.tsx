@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react';
 import { Layout } from '../components/Layout';
 import { useStore } from '../store/useStore';
+import { Header } from '../components/Header';
 
 export default function Home() {
   const { importData } = useStore();
@@ -23,5 +24,10 @@ export default function Home() {
     }
   }, [importData]);
 
-  return <Layout />;
+  return (
+    <>
+      <Header />
+      <Layout />
+    </>
+  );
 }
