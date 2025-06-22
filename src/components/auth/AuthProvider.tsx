@@ -13,6 +13,7 @@ interface AuthContextType {
   isSupabaseConfigured: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
+  resendConfirmation: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   error: string | null;
 }
@@ -92,11 +93,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setError(null);
       
       if (!isSupabaseConfigured()) {
-        throw new Error('Supabase is not configured. Please set up your environment variables.');
+        setError('Supabase is not configured. Please set up your environment variables.');
+        return;
       }
       
       if (!supabase?.auth) {
-        throw new Error('Supabase client is not initialized. Please check your environment variables.');
+        setError('Supabase client is not initialized. Please check your environment variables.');
+        return;
+      }
+      
+      // Explicitly check supabase is not null before making the call
+      if (!supabase) {
+        setError('Authentication service is not available. Please check your configuration.');
+        return;
       }
       
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -104,13 +113,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         password
       });
       
-      if (error) throw error;
+      if (error) {
+        // Handle specific error cases and set appropriate error messages
+        if (error.message === 'Email not confirmed' || error.message.includes('email_not_confirmed')) {
+          // Don't log this as an error since it's an expected user state
+          setError('UNCONFIRMED_EMAIL');
+          // Re-throw the error so calling components can handle it without console logging
+          throw error;
+        } else if (error.message === 'Invalid login credentials') {
+          setError('The email or password you entered is incorrect. Please check your credentials and try again.');
+          // Re-throw the error so calling components can handle it without console logging
+          throw error;
+        } else {
+          // Only log unexpected errors to console
+          console.error('Login error:', error);
+          setError(error.message || 'Failed to login');
+          throw error;
+        }
+      }
       
       setSession(data.session);
       setUser(data.user);
     } catch (err: any) {
-      console.error('Login error:', err);
-      setError(err.message || 'Failed to login');
+      // Only log unexpected errors - expected auth errors are already handled above
+      if (err.message !== 'Email not confirmed' && 
+          !err.message.includes('email_not_confirmed') && 
+          err.message !== 'Invalid login credentials') {
+        console.error('Login error:', err);
+        setError(err.message || 'Failed to login');
+      }
+      // Re-throw all errors so calling components can handle them
       throw err;
     } finally {
       setIsLoading(false);
@@ -131,6 +163,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error('Supabase client is not initialized. Please check your environment variables.');
       }
       
+      // Explicitly check supabase is not null before making the call
+      if (!supabase) {
+        throw new Error('Authentication service is not available. Please check your configuration.');
+      }
+      
       // Sign up with Supabase
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -144,11 +181,53 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       if (error) throw error;
       
+      // If email confirmation is required, don't set session immediately
+      if (data.user && !data.session) {
+        setError('REGISTRATION_SUCCESS');
+        return;
+      }
+      
       setSession(data.session);
       setUser(data.user);
     } catch (err: any) {
       console.error('Registration error:', err);
       setError(err.message || 'Failed to register');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Resend confirmation email function
+  const resendConfirmation = async (email: string) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      if (!isSupabaseConfigured()) {
+        throw new Error('Supabase is not configured. Please set up your environment variables.');
+      }
+      
+      if (!supabase?.auth) {
+        throw new Error('Supabase client is not initialized. Please check your environment variables.');
+      }
+      
+      // Explicitly check supabase is not null before making the call
+      if (!supabase) {
+        throw new Error('Authentication service is not available. Please check your configuration.');
+      }
+      
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email
+      });
+      
+      if (error) throw error;
+      
+      setError('CONFIRMATION_SENT');
+    } catch (err: any) {
+      console.error('Resend confirmation error:', err);
+      setError(err.message || 'Failed to resend confirmation email');
       throw err;
     } finally {
       setIsLoading(false);
@@ -167,6 +246,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       if (!supabase?.auth) {
         throw new Error('Supabase client is not initialized. Please check your environment variables.');
+      }
+      
+      // Explicitly check supabase is not null before making the call
+      if (!supabase) {
+        throw new Error('Authentication service is not available. Please check your configuration.');
       }
       
       const { error } = await supabase.auth.signOut();
@@ -191,6 +275,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isSupabaseConfigured: isSupabaseConfigured(),
     login,
     register,
+    resendConfirmation,
     logout,
     error
   };
