@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from './auth/AuthProvider';
-import { LogIn, LogOut, User, Settings, Menu, Calculator } from 'lucide-react';
+import { LogIn, LogOut, User, Settings, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { LoginPopup } from './auth/LoginPopup';
 import { RegisterPopup } from './auth/RegisterPopup';
@@ -50,14 +50,6 @@ export const Header: React.FC = () => {
               <path d="M37.4099 7.10067C37.4099 6.76889 37.6789 6.49993 38.0106 6.49993H40.8834C41.2152 6.49993 41.4841 6.76889 41.4841 7.10067V17.4246C41.4841 17.7564 41.2152 18.0253 40.8834 18.0253H38.0106C37.6789 18.0253 37.4099 17.7564 37.4099 17.4246V7.10067Z" fill="#9267FD"/>
             </svg>
           </Link>
-          
-          {/* Navigation Links */}
-          <div className="hidden md:flex items-center space-x-4">
-            <Link href="/accounting" className="text-gray-700 hover:text-indigo-600 flex items-center gap-1.5">
-              <Calculator size={16} />
-              <span>Accounting</span>
-            </Link>
-          </div>
         </div>
         
         <div className="flex items-center gap-3">
@@ -91,7 +83,7 @@ export const Header: React.FC = () => {
                     <p className="text-xs text-gray-500">{user?.email}</p>
                   </div>
                   <Link href="/accounting" className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
-                    <Calculator size={16} />
+                    <Settings size={16} />
                     Accounting
                   </Link>
                   <button 
@@ -131,9 +123,6 @@ export const Header: React.FC = () => {
           }
         }}
         onRegister={switchToRegister}
-        onResendConfirmation={async (email) => {
-          // This will be implemented in the AuthProvider
-        }}
         error={null}
       />
 

@@ -4,8 +4,8 @@ import { AuthProvider } from '@/components/auth/AuthProvider';
 import { SupabaseSetupNotice } from '@/components/SupabaseSetupNotice';
 
 export const metadata: Metadata = {
-  title: 'Accounting App',
-  description: 'Manage your finances with our powerful accounting tools',
+  title: 'Bento Grid App',
+  description: 'Create beautiful bento grid layouts',
 };
 
 export default function RootLayout({

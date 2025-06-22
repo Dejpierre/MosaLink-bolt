@@ -1,6 +1,8 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mail, Lock, Eye, EyeOff, UserPlus, User, AlertCircle, Check } from 'lucide-react';
+import { X, Mail, Lock, Eye, EyeOff, UserPlus, User, AlertCircle, CheckCircle } from 'lucide-react';
 
 interface RegisterPopupProps {
   isOpen: boolean;
@@ -22,6 +24,7 @@ export const RegisterPopup: React.FC<RegisterPopupProps> = ({
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
@@ -38,7 +41,11 @@ export const RegisterPopup: React.FC<RegisterPopupProps> = ({
 
   // Update local error when prop changes
   useEffect(() => {
-    setLocalError(error || null);
+    if (error === 'REGISTRATION_SUCCESS') {
+      setLocalError(null);
+    } else {
+      setLocalError(error || null);
+    }
   }, [error]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,13 +67,13 @@ export const RegisterPopup: React.FC<RegisterPopupProps> = ({
       return;
     }
     
-    if (password !== confirmPassword) {
-      setLocalError('Passwords do not match');
+    if (password.length < 6) {
+      setLocalError('Password must be at least 6 characters long');
       return;
     }
     
-    if (password.length < 8) {
-      setLocalError('Password must be at least 8 characters');
+    if (password !== confirmPassword) {
+      setLocalError('Passwords do not match');
       return;
     }
     
@@ -75,48 +82,10 @@ export const RegisterPopup: React.FC<RegisterPopupProps> = ({
       setLocalError(null);
       await onRegister(name, email, password);
     } catch (err) {
-      setLocalError(err instanceof Error ? err.message : 'Registration failed');
+      // Error handling is done in AuthProvider
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Password strength indicator
-  const getPasswordStrength = () => {
-    if (!password) return 0;
-    
-    let strength = 0;
-    
-    // Length check
-    if (password.length >= 8) strength += 1;
-    
-    // Contains number
-    if (/\d/.test(password)) strength += 1;
-    
-    // Contains lowercase
-    if (/[a-z]/.test(password)) strength += 1;
-    
-    // Contains uppercase
-    if (/[A-Z]/.test(password)) strength += 1;
-    
-    // Contains special character
-    if (/[^A-Za-z0-9]/.test(password)) strength += 1;
-    
-    return strength;
-  };
-
-  const passwordStrength = getPasswordStrength();
-  
-  const getStrengthColor = () => {
-    if (passwordStrength <= 1) return 'bg-red-500';
-    if (passwordStrength <= 3) return 'bg-yellow-500';
-    return 'bg-green-500';
-  };
-  
-  const getStrengthText = () => {
-    if (passwordStrength <= 1) return 'Weak';
-    if (passwordStrength <= 3) return 'Medium';
-    return 'Strong';
   };
 
   if (!isOpen) return null;
@@ -140,7 +109,7 @@ export const RegisterPopup: React.FC<RegisterPopupProps> = ({
         >
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Create an Account</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Create Your Account</h2>
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
@@ -153,6 +122,31 @@ export const RegisterPopup: React.FC<RegisterPopupProps> = ({
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            {/* Success message for registration */}
+            <AnimatePresence>
+              {error === 'REGISTRATION_SUCCESS' && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-600 dark:text-green-400 flex items-start gap-3"
+                >
+                  <CheckCircle size={18} className="flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium">Registration successful!</p>
+                    <p className="text-sm mt-1">Please check your email for a confirmation link to activate your account.</p>
+                    <button
+                      type="button"
+                      onClick={onLogin}
+                      className="mt-2 text-sm font-medium text-green-700 dark:text-green-300 hover:text-green-800 dark:hover:text-green-200 underline"
+                    >
+                      Go to login
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Error message */}
             <AnimatePresence>
               {localError && (
@@ -191,7 +185,7 @@ export const RegisterPopup: React.FC<RegisterPopupProps> = ({
 
             {/* Email field */}
             <div className="space-y-2">
-              <label htmlFor="register-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Email
               </label>
               <div className="relative">
@@ -199,7 +193,7 @@ export const RegisterPopup: React.FC<RegisterPopupProps> = ({
                   <Mail size={18} className="text-gray-400" />
                 </div>
                 <input
-                  id="register-email"
+                  id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -212,7 +206,7 @@ export const RegisterPopup: React.FC<RegisterPopupProps> = ({
 
             {/* Password field */}
             <div className="space-y-2">
-              <label htmlFor="register-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Password
               </label>
               <div className="relative">
@@ -220,7 +214,7 @@ export const RegisterPopup: React.FC<RegisterPopupProps> = ({
                   <Lock size={18} className="text-gray-400" />
                 </div>
                 <input
-                  id="register-password"
+                  id="password"
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -240,29 +234,11 @@ export const RegisterPopup: React.FC<RegisterPopupProps> = ({
                   )}
                 </button>
               </div>
-              
-              {/* Password strength indicator */}
-              {password && (
-                <div className="mt-2">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="text-xs text-gray-500 dark:text-gray-400">Password strength:</div>
-                    <div className="text-xs font-medium" style={{ color: getStrengthColor() }}>
-                      {getStrengthText()}
-                    </div>
-                  </div>
-                  <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full ${getStrengthColor()}`} 
-                      style={{ width: `${(passwordStrength / 5) * 100}%` }}
-                    ></div>
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Confirm Password field */}
             <div className="space-y-2">
-              <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Confirm Password
               </label>
               <div className="relative">
@@ -270,23 +246,25 @@ export const RegisterPopup: React.FC<RegisterPopupProps> = ({
                   <Lock size={18} className="text-gray-400" />
                 </div>
                 <input
-                  id="confirm-password"
-                  type={showPassword ? "text" : "password"}
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="pl-10 w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-600 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                   placeholder="••••••••"
                   disabled={isLoading}
                 />
-                {password && confirmPassword && (
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                    {password === confirmPassword ? (
-                      <Check size={18} className="text-green-500" />
-                    ) : (
-                      <AlertCircle size={18} className="text-red-500" />
-                    )}
-                  </div>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff size={18} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
+                  ) : (
+                    <Eye size={18} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
+                  )}
+                </button>
               </div>
             </div>
 
@@ -324,7 +302,7 @@ export const RegisterPopup: React.FC<RegisterPopupProps> = ({
                   onClick={onLogin}
                   className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium"
                 >
-                  Log in
+                  Sign in
                 </button>
               </p>
             </div>

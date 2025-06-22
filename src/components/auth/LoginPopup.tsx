@@ -1,12 +1,15 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mail, Lock, Eye, EyeOff, LogIn, User, AlertCircle } from 'lucide-react';
+import { X, Mail, Lock, Eye, EyeOff, LogIn, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
 
 interface LoginPopupProps {
   isOpen: boolean;
   onClose: () => void;
   onLogin: (email: string, password: string) => Promise<void>;
   onRegister: () => void;
+  onResendConfirmation: (email: string) => Promise<void>;
   error?: string | null;
 }
 
@@ -15,13 +18,16 @@ export const LoginPopup: React.FC<LoginPopupProps> = ({
   onClose,
   onLogin,
   onRegister,
+  onResendConfirmation,
   error
 }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [showUnconfirmedEmail, setShowUnconfirmedEmail] = useState(false);
 
   // Reset form when opening
   useEffect(() => {
@@ -29,12 +35,21 @@ export const LoginPopup: React.FC<LoginPopupProps> = ({
       setEmail('');
       setPassword('');
       setLocalError(null);
+      setShowUnconfirmedEmail(false);
     }
   }, [isOpen]);
 
   // Update local error when prop changes
   useEffect(() => {
-    setLocalError(error || null);
+    if (error === 'UNCONFIRMED_EMAIL') {
+      setShowUnconfirmedEmail(true);
+      setLocalError(null);
+    } else if (error === 'CONFIRMATION_SENT') {
+      setLocalError(null);
+    } else {
+      setLocalError(error || null);
+      setShowUnconfirmedEmail(false);
+    }
   }, [error]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -54,12 +69,40 @@ export const LoginPopup: React.FC<LoginPopupProps> = ({
     try {
       setIsLoading(true);
       setLocalError(null);
+      setShowUnconfirmedEmail(false);
       await onLogin(email, password);
     } catch (err) {
-      setLocalError(err instanceof Error ? err.message : 'Login failed');
+      // Error handling is done in AuthProvider
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleResendConfirmation = async () => {
+    if (!email.trim()) {
+      setLocalError('Please enter your email address first');
+      return;
+    }
+
+    try {
+      setIsResending(true);
+      setLocalError(null);
+      await onResendConfirmation(email);
+    } catch (err) {
+      // Error handling is done in AuthProvider
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+    setLocalError(null);
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+    setLocalError(null);
   };
 
   if (!isOpen) return null;
@@ -96,6 +139,68 @@ export const LoginPopup: React.FC<LoginPopupProps> = ({
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            {/* Success message for confirmation sent */}
+            <AnimatePresence>
+              {error === 'CONFIRMATION_SENT' && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-600 dark:text-green-400 flex items-start gap-3"
+                >
+                  <CheckCircle size={18} className="flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium">Confirmation email sent!</p>
+                    <p className="text-sm mt-1">Please check your email and click the confirmation link to activate your account.</p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Unconfirmed email message */}
+            <AnimatePresence>
+              {showUnconfirmedEmail && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 text-yellow-600 dark:text-yellow-400"
+                >
+                  <div className="flex items-start gap-3">
+                    <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="font-medium">Email not confirmed</p>
+                      <p className="text-sm mt-1">Please check your email for a confirmation link. If you didn't receive it, you can resend it below.</p>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        type="button"
+                        onClick={handleResendConfirmation}
+                        disabled={isResending}
+                        className="mt-3 flex items-center gap-2 px-3 py-1.5 bg-yellow-100 dark:bg-yellow-800/30 hover:bg-yellow-200 dark:hover:bg-yellow-800/50 text-yellow-700 dark:text-yellow-300 text-sm font-medium rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isResending ? (
+                          <>
+                            <motion.div
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                              className="w-4 h-4 border-2 border-yellow-600/30 border-t-yellow-600 rounded-full"
+                            />
+                            <span>Sending...</span>
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCw size={14} />
+                            <span>Resend confirmation</span>
+                          </>
+                        )}
+                      </motion.button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Error message */}
             <AnimatePresence>
               {localError && (
@@ -124,10 +229,10 @@ export const LoginPopup: React.FC<LoginPopupProps> = ({
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={handleEmailChange}
                   className="pl-10 w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-600 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                   placeholder="your@email.com"
-                  disabled={isLoading}
+                  disabled={isLoading || isResending}
                 />
               </div>
             </div>
@@ -145,10 +250,10 @@ export const LoginPopup: React.FC<LoginPopupProps> = ({
                   id="password"
                   type={showPassword ? "text" : "password"}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={handlePasswordChange}
                   className="pl-10 w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-600 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                   placeholder="••••••••"
-                  disabled={isLoading}
+                  disabled={isLoading || isResending}
                 />
                 <button
                   type="button"
@@ -179,7 +284,7 @@ export const LoginPopup: React.FC<LoginPopupProps> = ({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || isResending}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (

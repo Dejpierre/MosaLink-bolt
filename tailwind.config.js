@@ -5,28 +5,12 @@ module.exports = {
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
-  darkMode: 'class',
   theme: {
     extend: {
-      animation: {
-        'spin-slow': 'spin 3s linear infinite',
-        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'bounce-subtle': 'bounce 2s infinite',
+      fontFamily: {
+        'inter': ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
       },
-      backdropBlur: {
-        xs: '2px',
-      },
-      colors: {
-        gray: {
-          950: '#0c0a0f',
-        }
-      },
-      boxShadow: {
-        'glow': '0 0 20px rgba(99, 102, 241, 0.3)',
-        'glow-purple': '0 0 20px rgba(139, 92, 246, 0.3)',
-        'glow-pink': '0 0 20px rgba(236, 72, 153, 0.3)',
-      }
     },
   },
   plugins: [],
-};
+}

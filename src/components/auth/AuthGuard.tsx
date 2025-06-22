@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthProvider';
 import { LoginPopup } from './LoginPopup';
@@ -9,7 +11,7 @@ interface AuthGuardProps {
 }
 
 export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
-  const { isAuthenticated, isLoading, login, register, error } = useAuth();
+  const { isAuthenticated, isLoading, login, register, resendConfirmation, error } = useAuth();
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [showRegisterPopup, setShowRegisterPopup] = useState(false);
   const [initialCheckDone, setInitialCheckDone] = useState(false);
@@ -27,13 +29,29 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   }, [isLoading, isAuthenticated]);
 
   const handleLogin = async (email: string, password: string) => {
-    await login(email, password);
-    setShowLoginPopup(false);
+    try {
+      await login(email, password);
+      setShowLoginPopup(false);
+    } catch (err) {
+      // Error is handled in AuthProvider and passed via context
+      // Don't close popup on error so user can retry or resend confirmation
+    }
   };
 
   const handleRegister = async (name: string, email: string, password: string) => {
-    await register(name, email, password);
-    setShowRegisterPopup(false);
+    try {
+      await register(name, email, password);
+      // Only close if registration was successful and no confirmation needed
+      if (error !== 'REGISTRATION_SUCCESS') {
+        setShowRegisterPopup(false);
+      }
+    } catch (err) {
+      // Error is handled in AuthProvider and passed via context
+    }
+  };
+
+  const handleResendConfirmation = async (email: string) => {
+    await resendConfirmation(email);
   };
 
   const switchToRegister = () => {
@@ -68,6 +86,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
         onClose={() => setShowLoginPopup(false)}
         onLogin={handleLogin}
         onRegister={switchToRegister}
+        onResendConfirmation={handleResendConfirmation}
         error={error}
       />
       
