@@ -116,14 +116,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (error) {
         // Handle specific error cases and set appropriate error messages
         if (error.message === 'Email not confirmed' || error.message.includes('email_not_confirmed')) {
-          // Don't log this as an error since it's an expected user state
           setError('UNCONFIRMED_EMAIL');
-          // Re-throw the error so calling components can handle it without console logging
-          throw error;
+          return; // Return early without throwing - this is an expected state
         } else if (error.message === 'Invalid login credentials') {
           setError('The email or password you entered is incorrect. Please check your credentials and try again.');
-          // Re-throw the error so calling components can handle it without console logging
-          throw error;
+          return; // Return early without throwing - this is an expected state
         } else {
           // Only log unexpected errors to console
           console.error('Login error:', error);
@@ -135,15 +132,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setSession(data.session);
       setUser(data.user);
     } catch (err: any) {
-      // Only log unexpected errors - expected auth errors are already handled above
-      if (err.message !== 'Email not confirmed' && 
-          !err.message.includes('email_not_confirmed') && 
-          err.message !== 'Invalid login credentials') {
-        console.error('Login error:', err);
+      // Only re-throw errors that weren't already handled above
+      if (!error) {
+        console.error('Unexpected login error:', err);
         setError(err.message || 'Failed to login');
+        throw err;
       }
-      // Re-throw all errors so calling components can handle them
-      throw err;
     } finally {
       setIsLoading(false);
     }
