@@ -1,14 +1,11 @@
-import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Metadata } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/components/auth/AuthProvider';
 import { SupabaseSetupNotice } from '@/components/SupabaseSetupNotice';
 
-const inter = Inter({ subsets: ['latin'] });
-
 export const metadata: Metadata = {
-  title: 'Bento Grid App',
-  description: 'Create beautiful bento grid layouts',
+  title: 'Accounting App',
+  description: 'Manage your finances with our powerful accounting tools',
 };
 
 export default function RootLayout({
@@ -18,7 +15,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <head>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
+          rel="stylesheet"
+          crossOrigin="anonymous"
+        />
+      </head>
+      <body className="font-inter">
         <AuthProvider>
           <SupabaseSetupNotice />
           {children}
