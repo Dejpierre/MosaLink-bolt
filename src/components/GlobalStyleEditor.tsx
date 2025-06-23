@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '../store/useStore';
-import { FontFamily, FontWeight, TextAlign } from '../types';
+import { FontFamily, FontWeight, TextAlign, VerticalAlign } from '../types';
 import { HexColorPicker } from 'react-colorful';
 import { 
   Palette, 
@@ -16,6 +16,9 @@ import {
   AlignLeft,
   AlignCenter,
   AlignRight,
+  ArrowUp,
+  Minus,
+  ArrowDown,
   Settings
 } from 'lucide-react';
 
@@ -50,6 +53,13 @@ const textAlignOptions: { value: TextAlign; label: string; icon: React.Component
   { value: 'left', label: 'Gauche', icon: AlignLeft },
   { value: 'center', label: 'Centre', icon: AlignCenter },
   { value: 'right', label: 'Droite', icon: AlignRight }
+];
+
+// Remplacer les commentaires par cette définition active
+const verticalAlignOptions: { value: VerticalAlign; label: string; icon: React.ComponentType<{ size?: string | number }> }[] = [
+  { value: 'top', label: 'Haut', icon: ArrowUp },
+  { value: 'center', label: 'Centre', icon: Minus },
+  { value: 'bottom', label: 'Bas', icon: ArrowDown }
 ];
 
 const titleSizeOptions = [
@@ -161,6 +171,7 @@ export const GlobalStyleEditor: React.FC<GlobalStyleEditorProps> = ({ isOpen, on
     titleWeight: '700' as FontWeight,
     descriptionWeight: '400' as FontWeight,
     textAlign: 'left' as TextAlign,
+    verticalAlign: 'bottom' as VerticalAlign,
     titleSize: 'lg' as const,
     descriptionSize: 'sm' as const
   });
@@ -586,9 +597,9 @@ export const GlobalStyleEditor: React.FC<GlobalStyleEditorProps> = ({ isOpen, on
                 </div>
 
                 {/* Alignement du texte */}
-                <div>
-                  <label className="block text-sm font-medium mb-3 text-white">
-                    Alignement du texte
+                <div className="space-y-4">
+                  <label className="block text-sm font-medium text-white">
+                    Alignement horizontal
                   </label>
                   <div className="flex gap-2">
                     {textAlignOptions.map((align) => (
@@ -610,7 +621,39 @@ export const GlobalStyleEditor: React.FC<GlobalStyleEditorProps> = ({ isOpen, on
                             ? 'border-indigo-400 bg-indigo-500/20'
                             : 'border-white/20 bg-white/5 hover:bg-white/10'
                         }`}>
-                          <align.icon size={16} />
+                          <align.icon size={16} className="text-white" />
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Alignement vertical */}
+                <div className="space-y-4">
+                  <label className="block text-sm font-medium text-white">
+                    Alignement vertical
+                  </label>
+                  <div className="flex gap-2">
+                    {verticalAlignOptions.map((align) => (
+                      <label key={align.value} className="cursor-pointer flex-1">
+                        <input
+                          type="radio"
+                          name="verticalAlign"
+                          value={align.value}
+                          checked={globalTypography.verticalAlign === align.value}
+                          onChange={(e) => {
+                            const newTypography = { ...globalTypography, verticalAlign: e.target.value as VerticalAlign };
+                            setGlobalTypography(newTypography);
+                            if (previewMode) applyGlobalTypography();
+                          }}
+                          className="sr-only"
+                        />
+                        <div className={`p-3 rounded-lg border transition-all flex items-center justify-center ${
+                          globalTypography.verticalAlign === align.value
+                            ? 'border-indigo-400 bg-indigo-500/20'
+                            : 'border-white/20 bg-white/5 hover:bg-white/10'
+                        }`}>
+                          <align.icon size={16} className="text-white" />
                         </div>
                       </label>
                     ))}

@@ -92,6 +92,7 @@ export const BentoCardComponent: React.FC<BentoCardProps> = ({
     titleWeight: '700' as const,
     descriptionWeight: '400' as const,
     textAlign: 'left' as const,
+    verticalAlign: 'bottom' as const,
     titleSize: 'lg' as const,
     descriptionSize: 'sm' as const
   };
@@ -407,6 +408,18 @@ export const BentoCardComponent: React.FC<BentoCardProps> = ({
     }
   };
 
+  // Déterminer l'alignement vertical du contenu
+  const getVerticalAlignment = () => {
+    switch (typography.verticalAlign) {
+      case 'top':
+        return 'justify-start';
+      case 'center':
+        return 'justify-center';
+      default:
+        return 'justify-end';
+    }
+  };
+
   // Vérifier si le contenu est vide
   const hasContent = card.title || card.description;
 
@@ -497,12 +510,6 @@ export const BentoCardComponent: React.FC<BentoCardProps> = ({
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/20" />
             )}
 
-            {/* Subtle pattern overlay */}
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-16 translate-x-16" />
-              <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full translate-y-12 -translate-x-12" />
-            </div>
-
             {/* Rendu spécial pour les cartes profil */}
             {card.isProfileCard ? (
               <ProfileCardRenderer 
@@ -581,7 +588,7 @@ export const BentoCardComponent: React.FC<BentoCardProps> = ({
                 {!internalLayout.enabled && (
                   <div className={`relative z-10 h-full flex flex-col p-6 lg:p-8 ${getContentAlignment()}`}>
                     {/* Main content area */}
-                    <div className={`flex-1 flex flex-col justify-end ${getContentAlignment()}`}>
+                    <div className={`flex-1 flex flex-col ${getVerticalAlignment()} ${getContentAlignment()}`}>
                       {/* Title - Éditable avec typographie personnalisée */}
                       {isEditingTitle ? (
                         <motion.input

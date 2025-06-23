@@ -80,16 +80,17 @@ export const Preview: React.FC = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Fonction pour ajouter une nouvelle carte à une position spécifique
-  const handleAddCard = async (row: number, col: number) => {
-    const newCard = {
-      title: 'Nouvelle Carte',
-      description: 'Cliquez pour éditer cette carte',
+  const handleAddCard = async (type: BentoCard['type']) => {
+    const newCard: BentoCard = {
+      id: `card-${Date.now()}`,
+      type,
+      size: '2x3' as const,
+      title: '',
+      description: '',
       url: '',
       backgroundColor: '#6366f1',
       textColor: '#ffffff',
-      size: '1x1' as const,
-      gridPosition: { col, row } // Position spécifique
+      gridPosition: { col, row }
     };
     
     const result = await addCard(newCard);
@@ -133,7 +134,7 @@ export const Preview: React.FC = () => {
         margin: '0 auto 7rem',
         border: '8px solid #333',
         borderRadius: '24px',
-        backgroundColor: '#111',
+        backgroundColor: '',
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
       };
     } else if (currentLayout === 'tablet') {
@@ -142,7 +143,7 @@ export const Preview: React.FC = () => {
         margin: '0 auto 4rem',
         border: '8px solid #333',
         borderRadius: '16px',
-        backgroundColor: '#111',
+        backgroundColor: '',
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
       };
     } else {
@@ -230,7 +231,7 @@ export const Preview: React.FC = () => {
 
       {/* Grille principale */}
       <div 
-        className="relative z-10 flex-shrink-0 w-full px-4 pb-8"
+        className="relative z-10 flex-shrink-0 w-full px-4 pb-8 pt-4"
         style={getDeviceContainerStyle()}
       >
         {/* Utiliser le nouveau composant BentoGrid */}

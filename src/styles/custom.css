@@ -226,3 +226,30 @@
     font-size: 14px;
   }
 }
+
+/* Contraindre la largeur des cartes 1x1 sur desktop */
+@media (min-width: 1024px) {
+  .react-grid-item[data-grid="{\"w\":1,\"h\":1}"] {
+    max-width: 200px !important;
+  }
+  
+  /* Alternative plus générale pour toutes les petites cartes */
+  .react-grid-item {
+    min-width: 150px;
+  }
+  
+  .react-grid-item[style*="width: 100%"] {
+    max-width: 300px !important;
+  }
+}
+
+/* Ou utiliser une classe spécifique sur les cartes */
+.bento-card-small {
+  max-width: 250px;
+  min-width: 200px;
+}
+
+.bento-card-medium {
+  max-width: 400px;
+  min-width: 300px;
+}

@@ -246,65 +246,68 @@ export const ResizableCard: React.FC<ResizableCardProps> = ({
       
       {/* Mobile/Tablet Movement Controls */}
       {isMobileOrTablet && !isDragOverlay && !isBeingDragged && !isResizing && (
-        <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity z-30 flex gap-1">
+        <>
+          {/* Flèche vers le haut - en haut du bloc */}
           {canMove('up') && (
             <motion.button
               whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
               onClick={(e) => {
                 e.stopPropagation();
                 moveCard('up');
               }}
-              className="p-1.5 rounded-full bg-black/50 text-white hover:bg-indigo-500"
+              className="absolute top-1 left-1/2 transform -translate-x-1/2 p-3 rounded-full bg-black/70 text-white hover:bg-indigo-500 opacity-80 transition-opacity z-30"
+              style={{ transformOrigin: 'center' }}
             >
-              <ArrowUp size={12} />
+              <ArrowUp size={20} />
             </motion.button>
           )}
           
+          {/* Flèche vers le bas - en bas du bloc */}
           {canMove('down') && (
             <motion.button
               whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
               onClick={(e) => {
                 e.stopPropagation();
                 moveCard('down');
               }}
-              className="p-1.5 rounded-full bg-black/50 text-white hover:bg-indigo-500"
+              className="absolute bottom-1 left-1/2 transform -translate-x-1/2 p-3 rounded-full bg-black/70 text-white hover:bg-indigo-500 opacity-80 transition-opacity z-30"
+              style={{ transformOrigin: 'center' }}
             >
-              <ArrowDown size={12} />
+              <ArrowDown size={20} />
             </motion.button>
           )}
           
+          {/* Flèche vers la gauche - à gauche du bloc */}
           {canMove('left') && (
             <motion.button
               whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
               onClick={(e) => {
                 e.stopPropagation();
                 moveCard('left');
               }}
-              className="p-1.5 rounded-full bg-black/50 text-white hover:bg-indigo-500"
+              className="absolute left-1 top-1/2 transform -translate-y-1/2 p-3 rounded-full bg-black/70 text-white hover:bg-indigo-500 opacity-80 transition-opacity z-30"
+              style={{ transformOrigin: 'center' }}
             >
-              <ArrowLeft size={12} />
+              <ArrowLeft size={20} />
             </motion.button>
           )}
           
+          {/* Flèche vers la droite - à droite du bloc */}
           {canMove('right') && (
             <motion.button
               whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
               onClick={(e) => {
                 e.stopPropagation();
                 moveCard('right');
               }}
-              className="p-1.5 rounded-full bg-black/50 text-white hover:bg-indigo-500"
+              className="absolute right-1 top-1/2 transform -translate-y-1/2 p-3 rounded-full bg-black/70 text-white hover:bg-indigo-500 opacity-80 transition-opacity z-30"
+              style={{ transformOrigin: 'center' }}
             >
-              <ArrowRight size={12} />
+              <ArrowRight size={20} />
             </motion.button>
           )}
-        </div>
+        </>
       )}
-      
       {/* Edit Button */}
       {!isDragOverlay && !isBeingDragged && !isResizing && (
         <motion.button

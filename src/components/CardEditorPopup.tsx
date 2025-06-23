@@ -3,8 +3,8 @@ import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { HexColorPicker } from 'react-colorful';
 import { useStore } from '../store/useStore';
-import { BentoCard, GridSize, FontFamily, FontWeight, TextAlign, Typography, AppleMusicData, CalendlyData, InternalLayout } from '../types';
-import { Save, Trash2, Eye, EyeOff, Palette, Image, Upload, Type, AlignLeft, AlignCenter, AlignRight, X, Video, Play, Music, Grid, Calendar, Mail, MessageSquare } from 'lucide-react';
+import { BentoCard, GridSize, FontFamily, FontWeight, TextAlign, VerticalAlign, Typography, AppleMusicData, CalendlyData, InternalLayout } from '../types';
+import { Save, Trash2, Eye, EyeOff, Palette, Image, Upload, Type, AlignLeft, AlignCenter, AlignRight, ArrowUp, Minus, ArrowDown, X, Video, Play, Music, Grid, Calendar, Mail, MessageSquare } from 'lucide-react';
 import { ImageUploader } from './ImageUploader';
 import { VideoUploader } from './VideoUploader';
 import { AppleMusicSearch } from './AppleMusicSearch';
@@ -72,6 +72,7 @@ export const CardEditorPopup: React.FC<CardEditorPopupProps> = ({ cardId, onClos
     titleWeight: '700',
     descriptionWeight: '400',
     textAlign: 'left',
+    verticalAlign: 'bottom',
     titleSize: 'lg',
     descriptionSize: 'sm'
   };
@@ -348,6 +349,12 @@ export const CardEditorPopup: React.FC<CardEditorPopupProps> = ({ cardId, onClos
     { value: 'left', label: 'Gauche', icon: AlignLeft },
     { value: 'center', label: 'Centre', icon: AlignCenter },
     { value: 'right', label: 'Droite', icon: AlignRight }
+  ];
+
+  const verticalAlignOptions: { value: VerticalAlign; label: string; icon: React.ComponentType<{ size?: string | number; className?: string }> }[] = [
+    { value: 'top', label: 'Haut', icon: ArrowUp },
+    { value: 'center', label: 'Centre', icon: Minus },
+    { value: 'bottom', label: 'Bas', icon: ArrowDown }
   ];
 
   const titleSizeOptions = [
@@ -662,7 +669,7 @@ export const CardEditorPopup: React.FC<CardEditorPopupProps> = ({ cardId, onClos
 
                 {/* Text Alignment */}
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-white">Alignement du texte</label>
+                  <label className="block text-sm font-medium mb-2 text-white">Alignement horizontal</label>
                   <div className="flex gap-2">
                     {textAlignOptions.map((align) => (
                       <label key={align.value} className="cursor-pointer flex-1">
@@ -674,6 +681,30 @@ export const CardEditorPopup: React.FC<CardEditorPopupProps> = ({ cardId, onClos
                         />
                         <div className={`p-3 rounded-lg border transition-all flex items-center justify-center ${
                           selectedTypography.textAlign === align.value
+                            ? 'border-indigo-400 bg-indigo-500/20'
+                            : 'border-white/20 bg-white/5 hover:bg-white/10'
+                        }`}>
+                          <align.icon size={16} className="text-white" />
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Vertical Alignment */}
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-white">Alignement vertical</label>
+                  <div className="flex gap-2">
+                    {verticalAlignOptions.map((align) => (
+                      <label key={align.value} className="cursor-pointer flex-1">
+                        <input
+                          {...register('typography.verticalAlign')}
+                          type="radio"
+                          value={align.value}
+                          className="sr-only"
+                        />
+                        <div className={`p-3 rounded-lg border transition-all flex items-center justify-center ${
+                          selectedTypography.verticalAlign === align.value
                             ? 'border-indigo-400 bg-indigo-500/20'
                             : 'border-white/20 bg-white/5 hover:bg-white/10'
                         }`}>

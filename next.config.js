@@ -3,5 +3,5 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 })
 
 module.exports = withBundleAnalyzer({
-  // Votre configuration Next.js existante
+  // Your existing Next.js configuration
 })

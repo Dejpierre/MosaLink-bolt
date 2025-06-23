@@ -66,6 +66,33 @@ export const BentoGrid: React.FC<BentoGridProps> = ({
       window.removeEventListener('resize', calculateDimensions);
     };
   }, [currentLayout]);
+
+  // Effect to fix card positions when layout changes
+  useEffect(() => {
+    if (!mounted) return;
+    
+    // Vérifier si des cartes ont des positions invalides pour le layout actuel
+    const maxCols = getGridColumns();
+    const cardsToFix = cards.filter(card => {
+      if (!card.gridPosition) return false;
+      const { colSpan } = getCardSize(card);
+      return card.gridPosition.col + colSpan > maxCols;
+    });
+    
+    // Corriger les positions invalides
+    cardsToFix.forEach(card => {
+      if (card.gridPosition) {
+        const { colSpan } = getCardSize(card);
+        const newCol = Math.max(0, Math.min(card.gridPosition.col, maxCols - colSpan));
+        
+        console.log(`Fixing card ${card.id}: col ${card.gridPosition.col} -> ${newCol}, colSpan: ${colSpan}, maxCols: ${maxCols}`);
+        
+        updateCard(card.id, {
+          gridPosition: { ...card.gridPosition, col: newCol }
+        });
+      }
+    });
+  }, [currentLayout, mounted, cards]);
   
   // Determine number of columns based on layout
   const getGridColumns = () => {
@@ -94,9 +121,12 @@ export const BentoGrid: React.FC<BentoGridProps> = ({
     }
   };
   
-  // Convert card size to column and row span
+  // Convert card size to column and row span - FIXED LOGIC
   const getCardSize = (card: BentoCard) => {
     const [colSpan, rowSpan] = card.size.split('x').map(Number);
+    
+    // Debug: Log la taille de la carte
+    console.log(`Card ${card.id} size: ${card.size} -> colSpan: ${colSpan}, rowSpan: ${rowSpan}, layout: ${currentLayout}`);
     
     // Adapt size based on layout
     if (currentLayout === 'mobile') {
@@ -108,13 +138,10 @@ export const BentoGrid: React.FC<BentoGridProps> = ({
       const adaptedColSpan = Math.min(colSpan, 4);
       return { colSpan: adaptedColSpan, rowSpan };
     } else {
-      // On desktop, use normal size but limit to 12 columns max
-      // Also ensure minimum size of 2x2
-      const minColSpan = Math.max(2, colSpan);
-      const minRowSpan = Math.max(2, rowSpan);
+      // On desktop, use the actual size from card.size
       return { 
-        colSpan: Math.min(minColSpan, 12), 
-        rowSpan: Math.min(minRowSpan, 6) 
+        colSpan: Math.min(colSpan, 12), 
+        rowSpan: Math.min(rowSpan, 6) 
       };
     }
   };
@@ -172,6 +199,16 @@ export const BentoGrid: React.FC<BentoGridProps> = ({
       if (!card.gridPosition) return null;
       
       const { colSpan, rowSpan } = getCardSize(card);
+      
+      // DEBUG: Log card layout info
+      console.log(`Card ${card.id} layout:`, {
+        size: card.size,
+        colSpan,
+        rowSpan,
+        position: card.gridPosition,
+        currentLayout,
+        gridColumns: getGridColumns()
+      });
       
       return {
         i: card.id,
@@ -244,40 +281,66 @@ export const BentoGrid: React.FC<BentoGridProps> = ({
     return true;
   };
 
-  // Function to add a new card at a specific position
-  const handleAddCard = async (row: number, col: number) => {
-    // Check if the cell is free
-    if (!isCellFree(row, col) || addingCard) return;
-    
-    setAddingCard(true);
-    
-    try {
-      // For desktop, ensure minimum size is 2x2
-      const cardSize = currentLayout === 'desktop' ? '2x2' as const : '1x1' as const;
-      
-      const newCard = {
-        title: 'Nouvelle Carte',
-        description: 'Cliquez pour éditer cette carte',
-        url: '',
-        backgroundColor: '#6366f1',
-        textColor: '#ffffff',
-        size: cardSize,
-        gridPosition: { col, row } // Specific position
-      };
-      
-      const result = await addCard(newCard);
-      
-      if (!result.success) {
-        alert(result.error);
-      } else {
-        // Open editor for the new card
-        onCardClick && onCardClick(result.cardId || '');
-      }
-    } catch (error) {
-      console.error("Error adding card:", error);
-    } finally {
-      setAddingCard(false);
-    }
+  // Function to add a new card at a specific position - CORRECTED
+  const handleAddCard = async (type: BentoCard['type'], position?: { row: number; col: number }) => {
+  // Si aucune position n'est fournie, on doit trouver une position libre
+  if (!position) {
+  // Logique pour trouver une position libre automatiquement
+  // Cette partie dépend de votre implémentation existante
+  return;
+  }
+  
+  const { row, col } = position;
+  
+  // Check if the cell is free
+  if (!isCellFree(row, col) || addingCard) return;
+  
+  setAddingCard(true);
+  
+  try {
+  // Taille adaptée au layout actuel
+  let cardSize: string;
+  switch (currentLayout) {
+  case 'mobile':
+  cardSize = '1x1';
+  break;
+  case 'tablet':
+  cardSize = '2x2';
+  break;
+  case 'desktop':
+  default:
+  cardSize = '2x2'; // Taille fixe pour desktop
+  break;
+  }
+  
+  console.log(`Adding card with size: ${cardSize} at position (${col}, ${row}) for layout: ${currentLayout}`);
+  
+  const finalPosition = { row, col };
+  
+  const newCard: Partial<BentoCard> = {
+  type,
+  title: '',
+  description: '',
+  url: '',
+  backgroundColor: '#6366f1',
+  textColor: '#ffffff',
+  size: cardSize as any,
+  gridPosition: finalPosition
+  };
+  
+  const result = await addCard(newCard);
+  
+  if (!result.success) {
+  alert(result.error);
+  } else {
+  // Open editor for the new card
+  onCardClick && onCardClick(result.cardId || '');
+  }
+  } catch (error) {
+  console.error("Error adding card:", error);
+  } finally {
+  setAddingCard(false);
+  }
   };
 
   // Check plan limits
@@ -290,7 +353,7 @@ export const BentoGrid: React.FC<BentoGridProps> = ({
   // Calculate grid height based on content
   const gridHeight = getGridRows() * cellSize + (getGridRows() - 1) * getGap();
 
-  // Calculate all empty cells for the grid
+  // Calculate all empty cells for the grid - FIXED
   useEffect(() => {
     const maxCols = getGridColumns();
     const maxRows = getGridRows();
@@ -300,26 +363,53 @@ export const BentoGrid: React.FC<BentoGridProps> = ({
     for (let row = 0; row < maxRows; row++) {
       for (let col = 0; col < maxCols; col++) {
         if (isCellFree(row, col)) {
-          // For desktop, check if there's enough space for a 2x2 block
+          // Logique adaptée au layout
           if (currentLayout === 'desktop') {
-            // Check if we have a 2x2 space available
+            // Pour desktop, vérifier l'espace pour une carte 2x2
             let hasSpace = true;
-            for (let r = row; r < row + 2 && r < maxRows; r++) {
-              for (let c = col; c < col + 2 && c < maxCols; c++) {
-                if (!isCellFree(r, c)) {
-                  hasSpace = false;
-                  break;
+            
+            // Vérifier si on a assez d'espace (2x2)
+            if (col + 2 > maxCols || row + 2 > maxRows) {
+              hasSpace = false;
+            } else {
+              // Vérifier que toutes les cellules nécessaires sont libres
+              for (let r = row; r < row + 2; r++) {
+                for (let c = col; c < col + 2; c++) {
+                  if (!isCellFree(r, c)) {
+                    hasSpace = false;
+                    break;
+                  }
                 }
+                if (!hasSpace) break;
               }
-              if (!hasSpace) break;
             }
             
-            // Only add this cell if there's enough space for a 2x2 block
+            if (hasSpace) {
+              emptyCells.push({ row, col });
+            }
+          } else if (currentLayout === 'tablet') {
+            // Pour tablet, vérifier l'espace pour une carte 2x2
+            let hasSpace = true;
+            
+            if (col + 2 > maxCols || row + 2 > maxRows) {
+              hasSpace = false;
+            } else {
+              for (let r = row; r < row + 2; r++) {
+                for (let c = col; c < col + 2; c++) {
+                  if (!isCellFree(r, c)) {
+                    hasSpace = false;
+                    break;
+                  }
+                }
+                if (!hasSpace) break;
+              }
+            }
+            
             if (hasSpace) {
               emptyCells.push({ row, col });
             }
           } else {
-            // For tablet and mobile, just add the free cell
+            // Pour mobile, ajouter directement (1x1)
             emptyCells.push({ row, col });
           }
         }
@@ -327,11 +417,11 @@ export const BentoGrid: React.FC<BentoGridProps> = ({
     }
     
     setEmptyGridCells(emptyCells);
-  }, [cards, currentLayout]);
+  }, [cards, currentLayout, mounted]);
   
   // Use fallback values to ensure GridLayout always receives valid props
-  const safeGridWidth = gridDimensions.width || 1;
-  const safeCellSize = cellSize || 1;
+  const safeGridWidth = gridDimensions.width || 1200;
+  const safeCellSize = cellSize || 100;
 
   if (!mounted) {
     return (
@@ -344,11 +434,12 @@ export const BentoGrid: React.FC<BentoGridProps> = ({
   return (
     <div 
       ref={gridRef}
-      className={`relative touch-none ${className}`}
+      className={`relative touch-none w-full ${className}`}
       style={{ 
         height: gridHeight,
         minHeight: '300px',
-        position: 'relative'
+        position: 'relative',
+        width: '100%'
       }}
     >
       {isPreview ? (
@@ -398,13 +489,14 @@ export const BentoGrid: React.FC<BentoGridProps> = ({
             containerPadding={[0, 0]}
             onLayoutChange={handleLayoutChange}
             isDraggable={!isPreview && currentLayout === 'desktop'}
-            isResizable={false}  // Disable RGL's built-in resize
+            isResizable={false}
             compactType={null}
             preventCollision={true}
             useCSSTransforms={true}
             draggableHandle=".drag-handle"
             maxRows={getGridRows()}
-            resizeHandles={[]}  // Remove all RGL resize handles
+            resizeHandles={[]}
+            autoSize={false}
           >
             {cards.map((card) => {
               if (!card.gridPosition) return null;
@@ -450,7 +542,7 @@ export const BentoGrid: React.FC<BentoGridProps> = ({
                   className="cursor-pointer pointer-events-auto"
                   onMouseEnter={() => setHoveredCell({ row, col })}
                   onMouseLeave={() => setHoveredCell(null)}
-                  onClick={() => handleAddCard(row, col)}
+                  onClick={() => handleAddCard('standard', { row, col })}
                 >
                   {/* Empty cell with hover effect */}
                   <motion.div

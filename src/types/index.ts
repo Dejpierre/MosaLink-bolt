@@ -6,6 +6,7 @@ export type GridSize = '1x1' | '2x1' | '3x1' | '4x1' | '5x1' | '6x1' | '7x1' | '
 export type FontFamily = 'inter' | 'poppins' | 'roboto' | 'playfair' | 'montserrat' | 'lora' | 'oswald' | 'dancing-script';
 export type FontWeight = '300' | '400' | '500' | '600' | '700' | '800' | '900';
 export type TextAlign = 'left' | 'center' | 'right';
+export type VerticalAlign = 'top' | 'center' | 'bottom';
 export type UserPlan = 'free' | 'starter' | 'pro';
 export type ProfileType = 'personal' | 'company';
 
@@ -14,6 +15,7 @@ export interface Typography {
   titleWeight: FontWeight;
   descriptionWeight: FontWeight;
   textAlign: TextAlign;
+  verticalAlign?: VerticalAlign;
   titleSize?: 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl' | '3xl';
   descriptionSize?: 'xs' | 'sm' | 'base' | 'lg';
 }

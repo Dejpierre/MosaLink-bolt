@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '../store/useStore';
+import { BentoCard } from '../types';
 import dynamic from 'next/dynamic';
 import { ProfileSection } from './ProfileSection';
 import { CompanyLogoSection } from './CompanyLogoSection';
@@ -82,25 +83,90 @@ export default function BentoFlow() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Function to add a new card at a specific position
-  const handleAddCard = async (row: number, col: number) => {
-    const newCard = {
-      title: 'Nouvelle Carte',
-      description: 'Cliquez pour éditer cette carte',
+  // Function to find next available position
+  const findNextAvailablePosition = () => {
+    const maxCols = currentLayout === 'mobile' ? 2 : currentLayout === 'tablet' ? 4 : 12;
+    const maxRows = 6;
+    
+    // Determine the size of the card we want to place
+    const newCardSize = currentLayout === 'mobile' ? { colSpan: 1, rowSpan: 1 } : 
+                     currentLayout === 'tablet' ? { colSpan: 2, rowSpan: 2 } :
+                     { colSpan: 2, rowSpan: 2 }; // Gardé à 2x2 pour desktop par défaut
+    
+    // Check each position in the grid
+    for (let row = 0; row <= maxRows - newCardSize.rowSpan; row++) {
+      for (let col = 0; col <= maxCols - newCardSize.colSpan; col++) {
+        // Check if this position and the required space is free
+        let canPlace = true;
+        
+        // Check all cells that the new card would occupy
+        for (let r = row; r < row + newCardSize.rowSpan && canPlace; r++) {
+          for (let c = col; c < col + newCardSize.colSpan && canPlace; c++) {
+            // Check if any existing card occupies this cell
+            const isOccupied = cards.some(card => {
+              if (!card.gridPosition) return false;
+              
+              // Get card size adapted to current layout
+              const [cardColSpan, cardRowSpan] = card.size.split('x').map(Number);
+              const adaptedColSpan = currentLayout === 'mobile' ? Math.min(cardColSpan, 2) :
+                                    currentLayout === 'tablet' ? Math.min(cardColSpan, 4) :
+                                    Math.min(cardColSpan, 12);
+              
+              // Check if this card occupies the cell (c, r)
+              return c >= card.gridPosition.col && 
+                     c < card.gridPosition.col + adaptedColSpan &&
+                     r >= card.gridPosition.row && 
+                     r < card.gridPosition.row + cardRowSpan;
+            });
+            
+            if (isOccupied) {
+              canPlace = false;
+            }
+          }
+        }
+        
+        if (canPlace) {
+          console.log(`Found position: (${col}, ${row}) for ${newCardSize.colSpan}x${newCardSize.rowSpan} card`);
+          return { col, row };
+        }
+      }
+    }
+    
+    // If no position found, return 0,0 as fallback
+    console.warn('No free position found, using fallback (0,0)');
+    return { col: 0, row: 0 };
+  };
+
+  // Function to add a new card - CORRECTED
+  const handleAddCard = async (type: BentoCard['type'] = 'standard') => {
+    const newCard: Partial<BentoCard> = {
+      type,
+      title: '',
+      description: '',
       url: '',
       backgroundColor: '#6366f1',
       textColor: '#ffffff',
-      size: '1x1' as const,
-      gridPosition: { col, row } // Specific position
+      size: cardSize as any,
+      gridPosition: position
     };
     
-    const result = await addCard(newCard);
+    console.log('New card data:', newCard);
     
-    if (!result.success) {
-      alert(result.error);
-    } else {
-      // Open editor for the new card
-      selectCard(result.cardId || null);
+    try {
+      const result = await addCard(newCard);
+      console.log('Add card result:', result);
+      
+      if (!result.success) {
+        console.error('Failed to add card:', result.error);
+        alert(result.error || 'Erreur lors de l\'ajout de la carte');
+      } else {
+        console.log('Card added successfully, opening editor');
+        // Open editor for the new card
+        selectCard(result.cardId || null);
+      }
+    } catch (error) {
+      console.error('Error adding card:', error);
+      alert('Erreur lors de l\'ajout de la carte');
     }
   };
 
@@ -125,8 +191,9 @@ export default function BentoFlow() {
         margin: '0 auto 7rem',
         border: '8px solid #333',
         borderRadius: '24px',
-        backgroundColor: '#111',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+        backgroundColor: '',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+        padding: '16px'
       };
     } else if (currentLayout === 'tablet') {
       return {
@@ -134,8 +201,9 @@ export default function BentoFlow() {
         margin: '0 auto 4rem',
         border: '8px solid #333',
         borderRadius: '16px',
-        backgroundColor: '#111',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+        backgroundColor: '',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+        padding: '16px'
       };
     } else {
       return {
@@ -172,7 +240,7 @@ export default function BentoFlow() {
       {/* Profile Section - Only shown if mode = 'header' */}
       {profilePlacement.mode === 'header' && (
         <div 
-          className="relative z-10 flex-shrink-0 px-8 py-4 cursor-pointer sticky top-0"
+          className="relative z-10 flex-shrink-0 px-8 py-4 cursor-pointer sticky top-0 bg-white/80 backdrop-blur-sm"
         >
           <div className="w-full mx-auto relative">
             {isCompany ? <CompanyLogoSection /> : <ProfileSection />}
@@ -181,7 +249,7 @@ export default function BentoFlow() {
       )}
 
       {/* Responsive grid indicator */}
-      <div className={`relative z-10 flex-shrink-0 px-4 pb-2 sticky ${
+      <div className={`relative z-10 flex-shrink-0 px-4 pb-2 sticky bg-white/80 backdrop-blur-sm ${
         profilePlacement.mode === 'header' ? 'top-[88px]' : 'top-0'
       }`}>
         <div className="w-full max-w-7xl mx-auto">
@@ -196,11 +264,10 @@ export default function BentoFlow() {
                 currentLayout === 'tablet' ? 'bg-blue-400' : 'bg-green-400'
               }`} />
               <span className="capitalize">{currentLayout}</span>
+              <span className="text-gray-300">•</span>
+              <span>{cards.length}/{getMaxCards()} carte{cards.length > 1 ? 's' : ''}</span>
             </div>
             <div className="flex items-center gap-3">
-              <div className="hidden sm:block text-xs">
-                {cards.length}/{getMaxCards()} carte{cards.length > 1 ? 's' : ''}
-              </div>
               {userPlan !== 'pro' && (
                 <div className="flex items-center gap-1 text-xs">
                   <span className="text-yellow-400 font-medium">Plan {userPlan.toUpperCase()}</span>
@@ -220,53 +287,77 @@ export default function BentoFlow() {
         </div>
       )}
 
-      {/* Main grid */}
-      <div 
-        className="relative z-10 flex-shrink-0 w-full px-4 pb-8"
-        style={getDeviceContainerStyle()}
-      >
-        {/* Use BentoGrid component */}
-        <BentoGrid 
-          cards={cards}
-          onCardClick={handleEditCard}
-          className="max-w-7xl mx-auto"
-        />
-        
-        {/* Message if grid is empty */}
-        {cards.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="relative z-10 flex-shrink-0 flex items-center justify-center p-8"
-          >
-            <div className="text-center text-gray-400 max-w-md">
-              <div className={`mx-auto mb-4 rounded-lg bg-gradient-to-br from-indigo-500/20 to-purple-600/20 flex items-center justify-center ${
-                currentLayout === 'mobile' ? 'w-16 h-16' : 'w-20 h-20'
-              }`}>
-                <motion.div
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className={`rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 ${
-                    currentLayout === 'mobile' ? 'w-8 h-8' : 'w-10 h-10'
-                  }`}
-                />
+      {/* Main grid container */}
+      <div className="relative z-10 flex-1 w-full px-4 pb-8">
+        <div style={getDeviceContainerStyle()}>
+          {/* Use BentoGrid component */}
+          <BentoGrid 
+            cards={cards}
+            onCardClick={handleEditCard}
+            className="w-full"
+          />
+          
+          {/* Message if grid is empty */}
+          {cards.length === 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="relative z-10 flex items-center justify-center p-8 min-h-[400px]"
+            >
+              <div className="text-center text-gray-400 max-w-md">
+                <div className={`mx-auto mb-4 rounded-lg bg-gradient-to-br from-indigo-500/20 to-purple-600/20 flex items-center justify-center ${
+                  currentLayout === 'mobile' ? 'w-16 h-16' : 'w-20 h-20'
+                }`}>
+                  <motion.div
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className={`rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 ${
+                      currentLayout === 'mobile' ? 'w-8 h-8' : 'w-10 h-10'
+                    }`}
+                  />
+                </div>
+                <h3 className={`font-semibold mb-2 text-gray-600 ${currentLayout === 'mobile' ? 'text-lg' : 'text-xl'}`}>
+                  Votre Grille est Vide
+                </h3>
+                <p className={`text-gray-500 ${currentLayout === 'mobile' ? 'text-sm' : 'text-base'}`}>
+                  {shouldDisableAddBlocks()
+                    ? 'Utilisez le bouton + en bas à droite pour ajouter une carte'
+                    : 'Survolez une cellule de la grille et cliquez sur le bouton + pour ajouter une carte'
+                  }
+                </p>
+                {/* Add button for empty state when not on mobile */}
+                {!shouldDisableAddBlocks() && (
+                  <motion.button
+                    onClick={() => handleAddCard('standard')}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="mt-4 px-6 py-3 bg-indigo-500 text-white rounded-lg font-medium hover:bg-indigo-600 transition-colors"
+                  >
+                    Ajouter ma première carte
+                  </motion.button>
+                )}
               </div>
-              <h3 className={`font-semibold mb-2 ${currentLayout === 'mobile' ? 'text-lg' : 'text-xl'}`}>
-                Votre Grille est Vide
-              </h3>
-              <p className={`${currentLayout === 'mobile' ? 'text-sm' : 'text-base'}`}>
-                {shouldDisableAddBlocks()
-                  ? 'Utilisez le bouton + en bas à droite pour ajouter une carte'
-                  : 'Survolez une cellule de la grille et cliquez sur le bouton + pour ajouter une carte'
-                }
-              </p>
-            </div>
-          </motion.div>
-        )}
+            </motion.div>
+          )}
+        </div>
       </div>
 
       {/* Mobile Add Button - Only visible in mobile mode on mobile device */}
-      {shouldDisableAddBlocks() && <MobileAddButton />}
+      {shouldDisableAddBlocks() && canAddMoreCards() && (
+        <MobileAddButton onAddCard={handleAddCard} />
+      )}
+
+      {/* Debug info - remove in production */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="fixed top-4 right-4 bg-black/80 text-white p-2 text-xs rounded z-50">
+          <div>Layout: {currentLayout}</div>
+          <div>Cards: {cards.length}</div>
+          <div>Mounted: {mounted.toString()}</div>
+          <div>Mobile: {isClientMobile.toString()}</div>
+          <div>Real Mobile: {isClientRealMobileDevice.toString()}</div>
+          <div>Should Disable: {shouldDisableAddBlocks().toString()}</div>
+        </div>
+      )}
 
       {/* Layout Controls for Mobile - only render after mount */}
       {mounted && isClientMobile && (
