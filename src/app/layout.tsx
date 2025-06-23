@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import './globals.css';
+import '../styles/index.css';
 import { AuthProvider } from '@/components/auth/AuthProvider';
 import { SupabaseSetupNotice } from '@/components/SupabaseSetupNotice';
 import { StripeSetupNotice } from '@/components/StripeSetupNotice';
