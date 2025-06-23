@@ -1,12 +1,9 @@
 import { Metadata } from 'next';
-import '../styles/index.css';
-import { AuthProvider } from '@/components/auth/AuthProvider';
-import { SupabaseSetupNotice } from '@/components/SupabaseSetupNotice';
-import { StripeSetupNotice } from '@/components/StripeSetupNotice';
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Accounting App',
-  description: 'Manage your finances with our powerful accounting tools',
+  title: 'Bento Grid Editor',
+  description: 'Create beautiful bento grids with intuitive drag-and-drop',
 };
 
 export default function RootLayout({
@@ -24,11 +21,7 @@ export default function RootLayout({
         />
       </head>
       <body className="font-inter">
-        <AuthProvider>
-          <SupabaseSetupNotice />
-          <StripeSetupNotice />
-          {children}
-        </AuthProvider>
+        {children}
       </body>
     </html>
   );

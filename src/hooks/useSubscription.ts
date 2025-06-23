@@ -1,82 +1,63 @@
 import { useState, useEffect } from 'react';
-import { Subscription, Usage } from '../types/subscription';
 import { SUBSCRIPTION_PLANS } from '../config/plans';
+import { useStore } from '../store/useStore';
 
-interface UseSubscriptionReturn {
-  subscription: Subscription | null;
-  usage: Usage | null;
-  currentPlan: typeof SUBSCRIPTION_PLANS[keyof typeof SUBSCRIPTION_PLANS];
-  isLoading: boolean;
-  error: string | null;
-  canAddCard: boolean;
-  canUseGridSize: (size: string) => boolean;
-  canUseCustomColors: boolean;
-  hasFeature: (feature: keyof typeof SUBSCRIPTION_PLANS.free.features) => boolean;
-  refreshSubscription: () => Promise<void>;
-}
-
-export const useSubscription = (): UseSubscriptionReturn => {
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [usage, setUsage] = useState<Usage | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const currentPlan = subscription 
-    ? SUBSCRIPTION_PLANS[subscription.planId] 
-    : SUBSCRIPTION_PLANS.free;
-
-  const fetchSubscription = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const [subscriptionResponse, usageResponse] = await Promise.all([
-        fetch('/api/subscription/current'),
-        fetch('/api/subscription/usage')
-      ]);
-
-      if (subscriptionResponse.ok) {
-        const subscriptionData = await subscriptionResponse.json();
-        setSubscription(subscriptionData);
-      }
-
-      if (usageResponse.ok) {
-        const usageData = await usageResponse.json();
-        setUsage(usageData);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch subscription');
-    } finally {
-      setIsLoading(false);
-    }
+export const useSubscription = () => {
+  const { userPlan } = useStore();
+  
+  // Get the current plan based on the user's plan in the store
+  const currentPlan = SUBSCRIPTION_PLANS[userPlan] || SUBSCRIPTION_PLANS.free;
+  
+  // Mock usage data
+  const usage = {
+    cardsUsed: 0, // This will be updated dynamically
+    lastUpdated: new Date()
   };
-
+  
+  // Get the current cards to calculate usage
+  const { getCurrentDeviceCards } = useStore();
+  const cards = getCurrentDeviceCards();
+  
+  // Update usage data
   useEffect(() => {
-    fetchSubscription();
-  }, []);
-
-  const canAddCard = usage ? usage.cardsUsed < currentPlan.features.maxCards : true;
-
+    usage.cardsUsed = cards.length;
+  }, [cards]);
+  
+  // Check if user can add more cards based on their plan
+  const canAddCard = cards.length < currentPlan.features.maxCards;
+  
+  // Check if user can use a specific grid size
   const canUseGridSize = (size: string): boolean => {
     return currentPlan.features.gridSizes.includes(size);
   };
-
+  
+  // Check if user can use custom colors
   const canUseCustomColors = currentPlan.features.customColors;
-
+  
+  // Check if user has a specific feature
   const hasFeature = (feature: keyof typeof SUBSCRIPTION_PLANS.free.features): boolean => {
     return Boolean(currentPlan.features[feature]);
   };
-
+  
+  // Mock subscription data
+  const subscription = userPlan !== 'free' ? {
+    planId: userPlan,
+    status: 'active',
+    billingCycle: 'monthly',
+    currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    cancelAtPeriodEnd: false
+  } : null;
+  
   return {
     subscription,
     usage,
     currentPlan,
-    isLoading,
-    error,
+    isLoading: false,
+    error: null,
     canAddCard,
     canUseGridSize,
     canUseCustomColors,
     hasFeature,
-    refreshSubscription: fetchSubscription,
+    refreshSubscription: async () => {}
   };
 };
