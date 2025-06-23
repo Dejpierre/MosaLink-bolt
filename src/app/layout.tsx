@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
-import './globals.css';
+import { AuthProvider } from '../components/auth/AuthProvider';
+import '../index.css';
 
 export const metadata: Metadata = {
   title: 'Bento Grid Editor',
@@ -21,7 +22,9 @@ export default function RootLayout({
         />
       </head>
       <body className="font-inter">
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
